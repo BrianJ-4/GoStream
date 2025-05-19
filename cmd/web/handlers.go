@@ -11,7 +11,16 @@ func home(w http.ResponseWriter, req *http.Request) {
 }
 
 func video(w http.ResponseWriter, req *http.Request) {
-	videoName := req.PathValue("videoName")
-	log.Printf("GET /videos/%s", videoName)
-	w.Write([]byte(videoName))
+	fileName := req.PathValue("fileName")
+	log.Printf("GET /videos/%s", fileName)
+
+	// Will need to check if video exists
+
+	// Check for intial probe
+	if req.Header.Get("Range") == "" {
+		handleInitialProbe(w, req, fileName)
+		println("HIT")
+	}
+
+	//w.Write([]byte(fileName))
 }
