@@ -18,7 +18,7 @@ func OpenFile(fileName string) (*os.File, error) {
 	return file, err
 }
 
-func GetFileLength(file *os.File) (int64, error) {
+func GetFileSize(file *os.File) (int64, error) {
 	fileInfo, err := file.Stat()
 	if err != nil {
 		return 0, err
