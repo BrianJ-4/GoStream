@@ -15,6 +15,7 @@ func handleInitialProbe(w http.ResponseWriter, fileName string) error {
 		log.Print("Error opening file: ", err)
 		return err
 	}
+	defer video.Close()
 
 	// Check video file extension and set content-type
 	w.Header().Set("Content-Type", "video/mp4")
