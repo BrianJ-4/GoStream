@@ -24,11 +24,16 @@ func video(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Check for intial probe
+	// Handle intial probe
 	if req.Header.Get("Range") == "" {
 		err := handleInitialProbe(w, fileName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else { // Handle range request
+		err := handleRangeRequest(w, req.Header.Get("Range"), fileName)
+		if err != nil {
 			return
 		}
 	}
