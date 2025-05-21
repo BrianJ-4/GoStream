@@ -14,6 +14,7 @@ func OpenFile(fileName string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	return file, err
 }
 
