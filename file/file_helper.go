@@ -2,6 +2,7 @@ package file
 
 import (
 	"os"
+	"path/filepath"
 )
 
 func CheckFileExists(fileName string) error {
@@ -24,4 +25,8 @@ func GetFileSize(file *os.File) (int64, error) {
 	}
 	size := fileInfo.Size()
 	return size, err
+}
+
+func GetFileExtension(file *os.File) string {
+	return filepath.Ext(file.Name())
 }
