@@ -111,6 +111,7 @@ func parseRange(requestRange string, size int64) (Range, error) {
 		log.Print("Error parsing range: ", err)
 		return r, err
 	}
+
 	// Suffix range
 	if parts[0] == "" {
 		length, err := strconv.ParseInt(parts[1], 10, 64)
@@ -123,10 +124,38 @@ func parseRange(requestRange string, size int64) (Range, error) {
 		}
 		r.Start = size - length
 		r.Length = length
+	} else {
+		start, err := strconv.ParseInt(parts[0], 10, 64)
+		if err != nil {
+			log.Print("Error parsing range: ", err)
+			return r, err
+		}
+		var end int64
+		var length int64
+		// Normal range
+		if parts[1] != "" {
+			end, err = strconv.ParseInt(parts[1], 10, 64)
+			if err != nil {
+				log.Print("Error parsing range: ", err)
+				return r, err
+			}
+			if end <= start {
+				err := errors.New("invalid range")
+				log.Print("Error parsing range: ", err)
+				return r, err
+			}
+			length = end - start + 1
+		} else { // Prefix range
+			length = size - start
+		}
+		r.Start = start
+		r.Length = length
 	}
 
+	// Limit size of data to chunkSize (1mb)
 	if r.Length > chunkSize {
 		r.Length = chunkSize
 	}
+
 	return r, nil
 }
