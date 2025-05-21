@@ -17,7 +17,7 @@ func video(w http.ResponseWriter, req *http.Request) {
 	log.Printf("GET /videos/%s", fileName)
 
 	// Check if requested video exists
-	err := file.CheckVideoExists(fileName)
+	err := file.CheckFileExists(fileName)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
@@ -26,6 +26,10 @@ func video(w http.ResponseWriter, req *http.Request) {
 
 	// Check for intial probe
 	if req.Header.Get("Range") == "" {
-		handleInitialProbe(w, req, fileName)
+		err := handleInitialProbe(w, fileName)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 }
