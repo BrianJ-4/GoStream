@@ -1,6 +1,7 @@
 package file
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -29,4 +30,13 @@ func GetFileSize(file *os.File) (int64, error) {
 
 func GetFileExtension(file *os.File) string {
 	return filepath.Ext(file.Name())
+}
+
+func GetData(w io.Writer, file *os.File, start int64, length int64) error {
+	_, err := file.Seek(start, 0)
+	if err != nil {
+		return err
+	}
+	_, err = io.CopyN(w, file, length)
+	return err
 }
