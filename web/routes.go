@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/BrianJ-4/GoStream/file"
 )
 
 func home(w http.ResponseWriter, req *http.Request) {
@@ -14,13 +16,16 @@ func video(w http.ResponseWriter, req *http.Request) {
 	fileName := req.PathValue("fileName")
 	log.Printf("GET /videos/%s", fileName)
 
-	// Will need to check if video exists
+	// Check if requested video exists
+	err := file.CheckVideoExists(fileName)
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	// Check for intial probe
 	if req.Header.Get("Range") == "" {
 		handleInitialProbe(w, req, fileName)
-		println("HIT")
 	}
-
-	//w.Write([]byte(fileName))
 }
