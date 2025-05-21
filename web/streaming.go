@@ -99,7 +99,7 @@ func parseRange(requestRange string, size int64) (Range, error) {
 	// Not supporting multipart ranges
 	if strings.Contains(requestRange, ",") {
 		err := errors.New("multipart ranges not supported")
-		log.Print("Error parsing range: ", err)
+		log.Print("Error parsing range: ", err, ": ", requestRange)
 		return r, err
 	}
 
@@ -108,7 +108,7 @@ func parseRange(requestRange string, size int64) (Range, error) {
 
 	if len(parts) != 2 {
 		err := errors.New("invalid range format")
-		log.Print("Error parsing range: ", err)
+		log.Print("Error parsing range: ", err, ": bytes=", requestRange)
 		return r, err
 	}
 
@@ -116,9 +116,17 @@ func parseRange(requestRange string, size int64) (Range, error) {
 	if parts[0] == "" {
 		length, err := strconv.ParseInt(parts[1], 10, 64)
 		if err != nil {
-			log.Print("Error parsing suffix range: ", err)
+			log.Print("Error parsing suffix range: ", err, ": bytes=", requestRange)
 			return r, err
 		}
+		if length <= 0 {
+			err := errors.New("invalid suffix range: length must be greater than 0")
+			log.Print("Error parsing suffix range: ", err, ": bytes=", requestRange)
+			return r, err
+		}
+		// If last-byte-pos is greater than or equal to the current length
+		// of the representation data, the byte range is interpreted as the
+		// remainder of the representation
 		if length > size {
 			length = size
 		}
@@ -127,22 +135,19 @@ func parseRange(requestRange string, size int64) (Range, error) {
 	} else {
 		start, err := strconv.ParseInt(parts[0], 10, 64)
 		if err != nil {
-			log.Print("Error parsing range: ", err)
+			log.Print("Error parsing range: ", err, ": bytes=", requestRange)
 			return r, err
 		}
-		var end int64
 		var length int64
 		// Normal range
 		if parts[1] != "" {
-			end, err = strconv.ParseInt(parts[1], 10, 64)
+			end, err := strconv.ParseInt(parts[1], 10, 64)
 			if err != nil {
-				log.Print("Error parsing range: ", err)
+				log.Print("Error parsing range: ", err, ": bytes=", requestRange)
 				return r, err
 			}
-			if end <= start {
-				err := errors.New("invalid range")
-				log.Print("Error parsing range: ", err)
-				return r, err
+			if end >= size {
+				end = size - 1
 			}
 			length = end - start + 1
 		} else { // Prefix range
@@ -152,10 +157,27 @@ func parseRange(requestRange string, size int64) (Range, error) {
 		r.Length = length
 	}
 
+	err := r.validateRange(size)
+	if err != nil {
+		log.Print("Error parsing range: ", err, ": bytes=", requestRange)
+		return r, err
+	}
+
 	// Limit size of data to chunkSize (1mb)
 	if r.Length > chunkSize {
 		r.Length = chunkSize
 	}
 
+	fmt.Println(r)
 	return r, nil
+}
+
+func (r *Range) validateRange(size int64) error {
+	if r.Start >= size {
+		return errors.New("range start beyond file size")
+	}
+	if r.Length <= 0 {
+		return errors.New("range length must be positive")
+	}
+	return nil
 }
