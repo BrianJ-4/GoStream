@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -91,6 +92,10 @@ func handleRangeRequest(w http.ResponseWriter, requestRange string, fileName str
 
 	// Set Content-Length
 	w.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
+
+	// Set Content-Range
+	contentRange := fmt.Sprintf("bytes %s-%s/%s", strconv.FormatInt(r.Start, 10), strconv.FormatInt(r.Start+r.Length-1, 10), strconv.FormatInt(size, 10))
+	w.Header().Set("Content-Range", contentRange)
 
 	w.WriteHeader(http.StatusPartialContent)
 
