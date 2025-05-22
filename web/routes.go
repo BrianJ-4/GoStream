@@ -9,7 +9,6 @@ import (
 
 func home(w http.ResponseWriter, req *http.Request) {
 	log.Printf("GET /")
-	w.Write([]byte("HOME"))
 }
 
 func video(w http.ResponseWriter, req *http.Request) {
