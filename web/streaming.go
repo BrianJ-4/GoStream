@@ -24,7 +24,7 @@ type Range struct {
 
 const chunkSize = int64(5 * 1024 * 1024) // 5mb
 
-func handleInitialProbe(w http.ResponseWriter, fileName string) error {
+func handleInitialProbe(w http.ResponseWriter, fileName string, reqAddr string) error {
 	// Open Video
 	video, err := file.OpenFile(fileName)
 	if err != nil {
@@ -55,10 +55,11 @@ func handleInitialProbe(w http.ResponseWriter, fileName string) error {
 	w.Header().Set("Accept-Ranges", "bytes")
 
 	w.WriteHeader(http.StatusOK)
+	log.Printf("Outgoing to %s: %s", reqAddr, w.Header())
 	return nil
 }
 
-func handleRangeRequest(w http.ResponseWriter, requestRange string, fileName string) error {
+func handleRangeRequest(w http.ResponseWriter, requestRange string, fileName string, reqAddr string) error {
 	// Open Video
 	video, err := file.OpenFile(fileName)
 	if err != nil {
@@ -104,7 +105,7 @@ func handleRangeRequest(w http.ResponseWriter, requestRange string, fileName str
 		log.Print("Error getting data from video: ", err)
 		return err
 	}
-
+	log.Printf("Outgoing to %s: %s Start: %s", reqAddr, w.Header(), strconv.FormatInt(r.Start, 10))
 	return nil
 }
 
