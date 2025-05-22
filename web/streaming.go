@@ -17,7 +17,12 @@ var extensionMapping = map[string]string{
 	".ogg":  "ogg",
 }
 
-const chunkSize = int64(1024 * 1024) // 1mb
+type Range struct {
+	Start  int64
+	Length int64
+}
+
+const chunkSize = int64(5 * 1024 * 1024) // 5mb
 
 func handleInitialProbe(w http.ResponseWriter, fileName string) error {
 	// Open Video
@@ -71,25 +76,36 @@ func handleRangeRequest(w http.ResponseWriter, requestRange string, fileName str
 		return err
 	}
 
+	// Parse range header
 	r, err := parseRange(requestRange, size)
 	if err != nil {
 		w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
 		return err
 	}
-	if 0 > 1 {
-		fmt.Print(r)
-	}
 
 	// Add Accept-Ranges header
 	w.Header().Set("Accept-Ranges", "bytes")
 
-	w.WriteHeader(http.StatusPartialContent)
-	return nil
-}
+	// Harcoded mp4 for now
+	w.Header().Set("Content-Type", "video/mp4")
 
-type Range struct {
-	Start  int64
-	Length int64
+	// Set Content-Length
+	w.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
+
+	// Set Content-Range
+	contentRange := fmt.Sprintf("bytes %s-%s/%s", strconv.FormatInt(r.Start, 10), strconv.FormatInt(r.Start+r.Length-1, 10), strconv.FormatInt(size, 10))
+	w.Header().Set("Content-Range", contentRange)
+
+	w.WriteHeader(http.StatusPartialContent)
+
+	// Get requested data and send
+	err = file.GetData(w, video, r.Start, r.Length)
+	if err != nil {
+		log.Print("Error getting data from video: ", err)
+		return err
+	}
+
+	return nil
 }
 
 func parseRange(requestRange string, size int64) (Range, error) {
@@ -138,6 +154,7 @@ func parseRange(requestRange string, size int64) (Range, error) {
 			log.Print("Error parsing range: ", err, ": bytes=", requestRange)
 			return r, err
 		}
+
 		var length int64
 		// Normal range
 		if parts[1] != "" {
@@ -168,7 +185,6 @@ func parseRange(requestRange string, size int64) (Range, error) {
 		r.Length = chunkSize
 	}
 
-	fmt.Println(r)
 	return r, nil
 }
 
