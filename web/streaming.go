@@ -22,8 +22,6 @@ type Range struct {
 	Length int64
 }
 
-const chunkSize = int64(5 * 1024 * 1024) // 5mb
-
 func handleInitialProbe(w http.ResponseWriter, fileName string, reqAddr string) error {
 	// Open Video
 	video, err := file.OpenFile(fileName)
@@ -105,7 +103,7 @@ func handleRangeRequest(w http.ResponseWriter, requestRange string, fileName str
 		log.Print("Error getting data from video: ", err)
 		return err
 	}
-	log.Printf("Outgoing to %s: %s Start: %s", reqAddr, w.Header(), strconv.FormatInt(r.Start, 10))
+	log.Printf("Outgoing to %s: %s", reqAddr, w.Header())
 	return nil
 }
 
@@ -179,11 +177,6 @@ func parseRange(requestRange string, size int64) (Range, error) {
 	if err != nil {
 		log.Print("Error parsing range: ", err, ": bytes=", requestRange)
 		return r, err
-	}
-
-	// Limit size of data to chunkSize (1mb)
-	if r.Length > chunkSize {
-		r.Length = chunkSize
 	}
 
 	return r, nil
